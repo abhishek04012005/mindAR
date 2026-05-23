@@ -79,12 +79,8 @@
       color: #4CAF50;
     }
 
-    a-scene {
-      display: none;
-    }
-
     a-scene.loaded {
-      display: block;
+      display: block !important;
     }
   </style>
 </head>
@@ -180,62 +176,42 @@
       return current + (target - current) * factor;
     }
 
-    // Preload assets
-    let loadProgress = 0;
-    const assets = ['./car.glb', './targets.mind'];
-    let assetsLoaded = 0;
-
-    function updateLoadProgress() {
-      loadProgress = Math.round((assetsLoaded / assets.length) * 100);
-      loaderPercent.textContent = loadProgress + '%';
-      console.log('Load progress:', loadProgress + '%');
-      
-      if (loadProgress >= 100) {
-        setTimeout(() => {
-          loader.style.display = 'none';
-          scene.classList.add('loaded');
-        }, 500);
-      }
-    }
-
-    // Simulate asset loading
-    Promise.all([
-      fetch('./car.glb').then(r => { assetsLoaded++; updateLoadProgress(); return r; }),
-      fetch('./targets.mind').then(r => { assetsLoaded++; updateLoadProgress(); return r; })
-    ]).catch(err => {
-      console.error('Asset loading error:', err);
-      loaderPercent.textContent = 'Ready';
-      setTimeout(() => {
-        loader.style.display = 'none';
-        scene.classList.add('loaded');
-      }, 1000);
-    });
+    // Show scene immediately, hide loader after delay
+    setTimeout(() => {
+      loader.style.display = 'none';
+      scene.classList.add('loaded');
+      loaderPercent.textContent = '100%';
+      console.log('Scene loaded, showing camera...');
+    }, 1500);
 
     console.log('Elements loaded:', { car, target, statusDiv, scene });
 
     // Touch events for zoom
-    document.addEventListener('touchmove', function(event) {
-      if (event.touches.length === 2) {
-        event.preventDefault();
-        
-        const touch1 = event.touches[0];
-        const touch2 = event.touches[1];
-        
-        const distance = Math.hypot(
-          touch1.clientX - touch2.clientX,
-          touch1.clientY - touch2.clientY
-        );
-        
-        if (initialDistance === 0) {
-          initialDistance = distance;
-        } else {
-          const scale = distance / initialDistance;
-          currentScale = Math.max(0.2, Math.min(3, currentScale * scale));
-          car.setAttribute('scale', `${currentScale} ${currentScale} ${currentScale}`);
-          initialDistance = distance;
+    // Touch events for zoom (only if model exists)
+    if (car) {
+      document.addEventListener('touchmove', function(event) {
+        if (event.touches.length === 2) {
+          event.preventDefault();
+          
+          const touch1 = event.touches[0];
+          const touch2 = event.touches[1];
+          
+          const distance = Math.hypot(
+            touch1.clientX - touch2.clientX,
+            touch1.clientY - touch2.clientY
+          );
+          
+          if (initialDistance === 0) {
+            initialDistance = distance;
+          } else {
+            const scale = distance / initialDistance;
+            currentScale = Math.max(0.2, Math.min(3, currentScale * scale));
+            car.setAttribute('scale', `${currentScale} ${currentScale} ${currentScale}`);
+            initialDistance = distance;
+          }
         }
-      }
-    }, { passive: false });
+      }, { passive: false });
+    }
 
     document.addEventListener('touchend', function(event) {
       if (event.touches.length < 2) {
@@ -279,37 +255,22 @@
       }
     }, { passive: true });
 
+    // Log elements
+    console.log('✓ Elements ready:', { car, testBox, target, scene });
+    
     // Listen for model load event
-    car.addEventListener('model-loaded', () => {
-      modelLoaded = true;
-      console.log('✓ Car model loaded successfully!');
-      testBox.setAttribute('visible', 'false');
-      car.setAttribute('visible', 'true');
-    });
+    if (car) {
+      car.addEventListener('model-loaded', () => {
+        modelLoaded = true;
+        console.log('✓ Car model loaded successfully!');
+        testBox.setAttribute('visible', 'false');
+      });
 
-    // Listen for model load errors
-    car.addEventListener('error', (e) => {
-      console.error('Model load error:', e);
-      statusDiv.textContent = '❌ Model loading failed';
-      testBox.setAttribute('visible', 'true');
-      car.setAttribute('visible', 'false');
-    });
-
-    // Check model is loaded
-    console.log('Car element:', car);
-    console.log('Car src:', car ? car.getAttribute('src') : 'no car element');
-    console.log('Test box element:', testBox);
-    console.log('Target element:', target);
-    console.log('Scene element:', scene);
-
-    // Force check if model is loaded after delay
-    setTimeout(() => {
-      if (!modelLoaded) {
-        console.warn('Model not loaded after 3s, showing test box');
-        testBox.setAttribute('visible', 'true');
-        car.setAttribute('visible', 'false');
-      }
-    }, 3000);
+      car.addEventListener('error', (e) => {
+        console.error('Model load error:', e);
+        console.warn('Keeping test box visible instead');
+      });
+    }
 
     // Status updates
     scene.addEventListener('targetFound', () => {
