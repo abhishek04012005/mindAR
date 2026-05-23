@@ -127,9 +127,10 @@
       <a-gltf-model
         src="./car.glb"
         position="0 0 0"
-        scale="0.2 0.2 0.2"
+        scale="1 1 1"
         rotation="0 0 0"
-        id="car-model">
+        id="car-model"
+        animation-mixer>
       </a-gltf-model>
 
       <!-- TEXT -->
@@ -151,13 +152,14 @@
     console.log('MindAR AR App Started');
     
     let initialDistance = 0;
-    let currentScale = 0.2;
+    let currentScale = 1;
     const car = document.getElementById('car-model');
     const target = document.getElementById('target');
     const statusDiv = document.getElementById('status');
     const scene = document.getElementById('scene');
     const loader = document.getElementById('loader');
     const loaderPercent = loader.querySelector('.loader-percent');
+    let modelLoaded = false;
     
     // Smoothing filters for tracking stability
     let lastRotation = { x: 0, y: 0, z: 0 };
@@ -266,10 +268,20 @@
       }
     }, { passive: true });
 
+    // Listen for model load event
+    car.addEventListener('model-loaded', () => {
+      modelLoaded = true;
+      console.log('✓ Car model loaded successfully!');
+    });
+
     // Status updates
     scene.addEventListener('targetFound', () => {
       console.log('Target Found!');
-      statusDiv.textContent = '✓ Target detected!';
+      if (modelLoaded) {
+        statusDiv.textContent = '✓ Target detected! Model visible';
+      } else {
+        statusDiv.textContent = '✓ Target detected (loading model...)';
+      }
       statusDiv.style.background = 'rgba(0, 200, 0, 0.7)';
     });
 
