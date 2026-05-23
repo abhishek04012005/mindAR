@@ -126,7 +126,7 @@
       <!-- CAR MODEL -->
       <a-gltf-model
         src="./car.glb"
-        position="0 0 -0.5"
+        position="0 0 0"
         scale="1 1 1"
         rotation="0 0 0"
         id="car-model"
@@ -135,11 +135,12 @@
 
       <!-- TEST BOX (remove if model works) -->
       <a-box
-        position="0 0 -0.5"
-        scale="0.3 0.3 0.3"
-        color="blue"
+        position="0 0 0"
+        scale="0.5 0.5 0.5"
+        color="red"
         id="test-box"
-        visible="true">
+        visible="true"
+        wireframe="false">
       </a-box>
 
       <!-- TEXT -->
@@ -297,6 +298,9 @@
     // Check model is loaded
     console.log('Car element:', car);
     console.log('Car src:', car ? car.getAttribute('src') : 'no car element');
+    console.log('Test box element:', testBox);
+    console.log('Target element:', target);
+    console.log('Scene element:', scene);
 
     // Force check if model is loaded after delay
     setTimeout(() => {
