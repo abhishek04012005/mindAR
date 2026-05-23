@@ -45,7 +45,7 @@
   <div id="status">Detecting target...</div>
 
   <a-scene
-    mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 1; warmupCount: 8;"
+    mindar-image="imageTargetSrc: ./targets.mind;"
     color-space="sRGB"
     renderer="colorManagement: true, physicallyCorrectLights: true"
     vr-mode-ui="enabled: false"
@@ -92,12 +92,16 @@
   </a-scene>
 
   <script>
+    console.log('MindAR AR App Started');
+    
     let initialDistance = 0;
     let currentScale = 0.5;
     const car = document.getElementById('car-model');
     const target = document.getElementById('target');
     const statusDiv = document.getElementById('status');
     const scene = document.getElementById('scene');
+    
+    console.log('Elements loaded:', { car, target, statusDiv, scene });
 
     // Touch events for zoom
     document.addEventListener('touchmove', function(event) {
@@ -160,14 +164,25 @@
 
     // Status updates
     scene.addEventListener('targetFound', () => {
+      console.log('Target Found!');
       statusDiv.textContent = '✓ Target detected!';
       statusDiv.style.background = 'rgba(0, 200, 0, 0.7)';
     });
 
     scene.addEventListener('targetLost', () => {
+      console.log('Target Lost');
       statusDiv.textContent = 'Detecting target...';
       statusDiv.style.background = 'rgba(0, 0, 0, 0.7)';
     });
+
+    // Error handling
+    window.addEventListener('error', (event) => {
+      console.error('Error:', event.error);
+      statusDiv.textContent = 'Error: Check console';
+      statusDiv.style.background = 'rgba(200, 0, 0, 0.7)';
+    });
+
+    console.log('Scene initialized successfully');
   </script>
 
 </body>
