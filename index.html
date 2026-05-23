@@ -2,9 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
 
-  <title>MindAR Image Tracking</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, user-scalable=no"
+  />
+
+  <title>MindAR Multi Target</title>
 
   <!-- A-Frame -->
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
@@ -13,302 +17,206 @@
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    body {
+    * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
       overflow: hidden;
       width: 100%;
       height: 100vh;
       font-family: Arial, sans-serif;
-    }
-
-    a-scene {
-      width: 100% !important;
-      height: 100% !important;
-    }
-
-    #status {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      padding: 10px;
-      border-radius: 5px;
-      font-size: 12px;
-      z-index: 100;
+      background: black;
     }
 
     #loader {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.9);
+      inset: 0;
+      background: #000;
       display: flex;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
-      z-index: 999;
+      flex-direction: column;
+      z-index: 9999;
       color: white;
-      font-family: Arial, sans-serif;
     }
 
-    .loader-spinner {
-      width: 50px;
-      height: 50px;
-      border: 4px solid rgba(255, 255, 255, 0.3);
-      border-top-color: white;
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border: 5px solid rgba(255,255,255,0.2);
+      border-top: 5px solid white;
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin-bottom: 20px;
     }
 
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      100% {
+        transform: rotate(360deg);
+      }
     }
 
-    .loader-text {
-      font-size: 18px;
-      margin-bottom: 10px;
+    #status {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      color: white;
+      background: rgba(0,0,0,0.6);
+      padding: 10px 15px;
+      border-radius: 10px;
+      font-size: 14px;
     }
 
-    .loader-percent {
-      font-size: 24px;
-      font-weight: bold;
-      color: #4CAF50;
-    }
-
-    a-scene.loaded {
-      display: block !important;
+    a-scene {
+      width: 100vw !important;
+      height: 100vh !important;
     }
   </style>
 </head>
 
 <body>
 
-  <!-- LOADER -->
+  <!-- Loader -->
   <div id="loader">
-    <div class="loader-spinner"></div>
-    <div class="loader-text">Loading AR Assets...</div>
-    <div class="loader-percent">0%</div>
+    <div class="spinner"></div>
+    <h2>Loading AR...</h2>
   </div>
 
-  <div id="status">Detecting target...</div>
+  <!-- Status -->
+  <div id="status">
+    Detecting target...
+  </div>
 
+  <!-- AR Scene -->
   <a-scene
-    mindar-image="imageTargetSrc: ['./apple.mind', './butterfly.mind']; filterMinCF: 0.5; filterBeta: 0.5; warmupCount: 4"
+    id="scene"
+    mindar-image="imageTargetSrc: ./targets.mind; filterMinCF: 0.001; filterBeta: 0.01;"
     color-space="sRGB"
-    renderer="colorManagement: true, physicallyCorrectLights: true, antialias: true"
+    renderer="colorManagement: true; physicallyCorrectLights: true"
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
     embedded
-    id="scene"
   >
-
-    <!-- Lighting -->
-    <a-light type="ambient" intensity="1.5"></a-light>
-    <a-light type="directional" intensity="1" position="5 5 5"></a-light>
 
     <!-- Camera -->
     <a-camera
       position="0 0 0"
-      look-controls="enabled: false">
-    </a-camera>
+      look-controls="enabled: false"
+    ></a-camera>
 
-    <!-- IMAGE TARGET 1: Apple Model (A) -->
-    <a-entity mindar-image-target="targetIndex: 0" id="target-a">
+    <!-- Lights -->
+    <a-light type="ambient" intensity="1.5"></a-light>
+
+    <a-light
+      type="directional"
+      intensity="1"
+      position="0 1 1"
+    ></a-light>
+
+    <!-- TARGET 0 -->
+    <a-entity mindar-image-target="targetIndex: 0">
+
       <a-gltf-model
         src="./model/apple.glb"
         position="0 0 0"
-        scale="1 1 1"
+        scale="0.5 0.5 0.5"
         rotation="0 0 0"
-        id="object-a"
-        animation="property: rotation; to: 0 360 0; loop: true; dur: 4000">
+        animation="property: rotation; to: 0 360 0; loop: true; dur: 4000"
+      >
       </a-gltf-model>
-      <a-text value="Apple" position="0 1 0" scale="1 1 1" align="center" color="white"></a-text>
+
+      <a-text
+        value="Apple"
+        position="0 0.8 0"
+        align="center"
+        color="white"
+        scale="1 1 1"
+      >
+      </a-text>
+
     </a-entity>
 
-    <!-- IMAGE TARGET 2: Butterfly Model (B) -->
-    <a-entity mindar-image-target="targetIndex: 1" id="target-b">
+    <!-- TARGET 1 -->
+    <a-entity mindar-image-target="targetIndex: 1">
+
       <a-gltf-model
         src="./model/butterfly.glb"
         position="0 0 0"
-        scale="1 1 1"
+        scale="0.5 0.5 0.5"
         rotation="0 0 0"
-        id="object-b"
-        animation="property: rotation; to: 360 0 0; loop: true; dur: 3000">
+        animation="property: rotation; to: 0 360 0; loop: true; dur: 3000"
+      >
       </a-gltf-model>
-      <a-text value="Butterfly" position="0 1 0" scale="1 1 1" align="center" color="white"></a-text>
+
+      <a-text
+        value="Butterfly"
+        position="0 0.8 0"
+        align="center"
+        color="white"
+        scale="1 1 1"
+      >
+      </a-text>
+
     </a-entity>
 
   </a-scene>
 
   <script>
-    console.log('MindAR AR App Started');
-    
-    let initialDistance = 0;
-    let currentScale = 1;
-    const targets = {
-      a: { element: document.getElementById('target-a'), objects: [document.getElementById('object-a')] },
-      b: { element: document.getElementById('target-b'), objects: [document.getElementById('object-b')] }
-    };
-    const statusDiv = document.getElementById('status');
-    const scene = document.getElementById('scene');
-    const loader = document.getElementById('loader');
-    const loaderPercent = loader.querySelector('.loader-percent');
-    
-    // Smoothing filters for tracking stability
-    let lastRotation = { x: 0, y: 0, z: 0 };
-    const smoothingFactor = 0.7;
-    
-    function smoothValue(current, target, factor) {
-      return current + (target - current) * factor;
-    }
 
-    // Show scene immediately, hide loader after delay
-    setTimeout(() => {
-      loader.style.display = 'none';
-      scene.classList.add('loaded');
-      loaderPercent.textContent = '100%';
-      console.log('Scene loaded, showing camera...');
-    }, 1500);
+    const loader = document.getElementById("loader");
+    const status = document.getElementById("status");
+    const scene = document.querySelector("a-scene");
 
-    console.log('Elements loaded:', { targets, statusDiv, scene });
+    // Hide loader when scene fully loaded
+    scene.addEventListener("loaded", () => {
 
-    // Touch events for zoom
-    // Touch events for zoom on all objects
-    document.addEventListener('touchmove', function(event) {
-      if (event.touches.length === 2) {
-        event.preventDefault();
-        
-        const touch1 = event.touches[0];
-        const touch2 = event.touches[1];
-        
-        const distance = Math.hypot(
-          touch1.clientX - touch2.clientX,
-          touch1.clientY - touch2.clientY
-        );
-        
-        if (initialDistance === 0) {
-          initialDistance = distance;
-        } else {
-          const scale = distance / initialDistance;
-          currentScale = Math.max(0.2, Math.min(3, currentScale * scale));
-          
-          // Scale all visible objects
-          Object.values(targets).forEach(target => {
-            target.objects.forEach(obj => {
-              if (obj) obj.setAttribute('scale', `${currentScale} ${currentScale} ${currentScale}`);
-            });
-          });
-          initialDistance = distance;
-        }
-      }
-    }, { passive: false });
+      console.log("Scene Loaded");
 
-    document.addEventListener('touchend', function(event) {
-      if (event.touches.length < 2) {
-        initialDistance = 0;
-      }
+      setTimeout(() => {
+        loader.style.display = "none";
+      }, 1000);
+
     });
 
-    // Rotation with swipe
-    let startX = 0;
-    let startY = 0;
-    let currentRotationY = 0;
-    let currentRotationX = 0;
+    // Target found
+    scene.addEventListener("targetFound", (event) => {
 
-    document.addEventListener('touchstart', function(event) {
-      if (event.touches.length === 1) {
-        startX = event.touches[0].clientX;
-        startY = event.touches[0].clientY;
+      const index = event.detail.targetIndex;
+
+      if(index === 0){
+        status.innerHTML = "🍎 Apple Detected";
       }
-    });
 
-    document.addEventListener('touchmove', function(event) {
-      if (event.touches.length === 1) {
-        const deltaX = event.touches[0].clientX - startX;
-        const deltaY = event.touches[0].clientY - startY;
-        
-        // Swipe to rotate all objects
-        let newRotationY = currentRotationY + deltaX * 0.5;
-        let newRotationX = currentRotationX + deltaY * 0.3;
-        
-        // Apply smoothing filter
-        lastRotation.x = smoothValue(lastRotation.x, newRotationX, smoothingFactor);
-        lastRotation.y = smoothValue(lastRotation.y, newRotationY, smoothingFactor);
-        
-        currentRotationY = lastRotation.y;
-        currentRotationX = lastRotation.x;
-        
-        // Rotate all visible objects
-        Object.values(targets).forEach(target => {
-          target.objects.forEach(obj => {
-            if (obj) obj.setAttribute('rotation', `${currentRotationX} ${currentRotationY} 0`);
-          });
-        });
-        
-        startX = event.touches[0].clientX;
-        startY = event.touches[0].clientY;
+      if(index === 1){
+        status.innerHTML = "🦋 Butterfly Detected";
       }
-    }, { passive: true });
 
-    // Log elements
-    console.log('✓ All targets ready:', targets);
-    
-    // Status updates for multiple targets
-    const targetLabels = { 0: 'Apple', 1: 'Butterfly' };
-    
-    scene.addEventListener('targetFound', (event) => {
-      const targetIndex = event.detail.targetIndex;
-      const label = targetLabels[targetIndex] || '?';
-      console.log(`Target ${label} (${targetIndex}) Found!`);
-      statusDiv.textContent = `✓ Target ${label} detected!`;
-      statusDiv.style.background = 'rgba(0, 200, 0, 0.7)';
+      console.log("Target Found:", index);
+
     });
 
-    scene.addEventListener('targetLost', (event) => {
-      const targetIndex = event.detail.targetIndex;
-      const label = targetLabels[targetIndex] || '?';
-      console.log(`Target ${label} (${targetIndex}) Lost`);
-      statusDiv.textContent = 'Detecting target...';
-      statusDiv.style.background = 'rgba(0, 0, 0, 0.7)';
+    // Target lost
+    scene.addEventListener("targetLost", (event) => {
+
+      status.innerHTML = "Detecting target...";
+
+      console.log("Target Lost");
+
     });
-
-    // Stability improvements - reduce tracking jitter for all targets
-    const targetTransforms = {};
-
-    function isSignificantChange(current, last) {
-      if (!last) return true;
-      const dx = Math.abs(current[0] - last[0]);
-      const dy = Math.abs(current[1] - last[1]);
-      const dz = Math.abs(current[2] - last[2]);
-      return (dx + dy + dz) > 0.01;
-    }
-
-    // Update target stabilization every frame
-    let updateInterval = setInterval(() => {
-      Object.entries(targets).forEach(([key, target]) => {
-        if (target.element && target.element.object3D) {
-          const position = target.element.object3D.position;
-          const posArray = [position.x, position.y, position.z];
-          
-          if (isSignificantChange(posArray, targetTransforms[key])) {
-            targetTransforms[key] = posArray;
-          }
-        }
-      });
-    }, 16); // ~60fps
 
     // Error handling
-    window.addEventListener('error', (event) => {
-      console.error('Error:', event.error);
-      statusDiv.textContent = 'Error: Check console';
-      statusDiv.style.background = 'rgba(200, 0, 0, 0.7)';
+    window.addEventListener("error", (e) => {
+
+      console.error(e);
+
+      status.innerHTML = "Error Loading AR";
+
     });
 
-    console.log('Scene initialized successfully with stabilization filters');
   </script>
 
 </body>
