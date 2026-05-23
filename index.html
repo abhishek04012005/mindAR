@@ -97,7 +97,7 @@
   <div id="status">Detecting target...</div>
 
   <a-scene
-    mindar-image="imageTargetSrc: ./targets.mind; filterMinCF: 0.5; filterBeta: 0.5; warmupCount: 4"
+    mindar-image="imageTargetSrc: ['./apple.mind', './butterfly.mind']; filterMinCF: 0.5; filterBeta: 0.5; warmupCount: 4"
     color-space="sRGB"
     renderer="colorManagement: true, physicallyCorrectLights: true, antialias: true"
     vr-mode-ui="enabled: false"
@@ -116,40 +116,30 @@
       look-controls="enabled: false">
     </a-camera>
 
-    <!-- IMAGE TARGET -->
-    <a-entity mindar-image-target="targetIndex: 0" id="target">
-
-      <!-- CAR MODEL -->
+    <!-- IMAGE TARGET 1: Apple Model (A) -->
+    <a-entity mindar-image-target="targetIndex: 0" id="target-a">
       <a-gltf-model
-        src="./car.glb"
+        src="./model/apple.glb"
         position="0 0 0"
         scale="1 1 1"
         rotation="0 0 0"
-        id="car-model"
-        animation-mixer>
+        id="object-a"
+        animation="property: rotation; to: 0 360 0; loop: true; dur: 4000">
       </a-gltf-model>
+      <a-text value="Apple" position="0 1 0" scale="1 1 1" align="center" color="white"></a-text>
+    </a-entity>
 
-      <!-- TEST BOX (remove if model works) -->
-      <a-box
+    <!-- IMAGE TARGET 2: Butterfly Model (B) -->
+    <a-entity mindar-image-target="targetIndex: 1" id="target-b">
+      <a-gltf-model
+        src="./model/butterfly.glb"
         position="0 0 0"
-        scale="0.5 0.5 0.5"
-        color="red"
-        id="test-box"
-        visible="true"
-        wireframe="false">
-      </a-box>
-
-      <!-- TEXT -->
-      <a-text
-        value="Hello AR"
-        position="0 0 0.5"
-        scale="2 2 2"
-        align="center"
-        color="white"
-        width="4"
-        anchor="center">
-      </a-text>
-
+        scale="1 1 1"
+        rotation="0 0 0"
+        id="object-b"
+        animation="property: rotation; to: 360 0 0; loop: true; dur: 3000">
+      </a-gltf-model>
+      <a-text value="Butterfly" position="0 1 0" scale="1 1 1" align="center" color="white"></a-text>
     </a-entity>
 
   </a-scene>
@@ -159,18 +149,18 @@
     
     let initialDistance = 0;
     let currentScale = 1;
-    const car = document.getElementById('car-model');
-    const testBox = document.getElementById('test-box');
-    const target = document.getElementById('target');
+    const targets = {
+      a: { element: document.getElementById('target-a'), objects: [document.getElementById('object-a')] },
+      b: { element: document.getElementById('target-b'), objects: [document.getElementById('object-b')] }
+    };
     const statusDiv = document.getElementById('status');
     const scene = document.getElementById('scene');
     const loader = document.getElementById('loader');
     const loaderPercent = loader.querySelector('.loader-percent');
-    let modelLoaded = false;
     
     // Smoothing filters for tracking stability
     let lastRotation = { x: 0, y: 0, z: 0 };
-    const smoothingFactor = 0.7; // Higher = smoother but slower response
+    const smoothingFactor = 0.7;
     
     function smoothValue(current, target, factor) {
       return current + (target - current) * factor;
@@ -184,34 +174,38 @@
       console.log('Scene loaded, showing camera...');
     }, 1500);
 
-    console.log('Elements loaded:', { car, target, statusDiv, scene });
+    console.log('Elements loaded:', { targets, statusDiv, scene });
 
     // Touch events for zoom
-    // Touch events for zoom (only if model exists)
-    if (car) {
-      document.addEventListener('touchmove', function(event) {
-        if (event.touches.length === 2) {
-          event.preventDefault();
+    // Touch events for zoom on all objects
+    document.addEventListener('touchmove', function(event) {
+      if (event.touches.length === 2) {
+        event.preventDefault();
+        
+        const touch1 = event.touches[0];
+        const touch2 = event.touches[1];
+        
+        const distance = Math.hypot(
+          touch1.clientX - touch2.clientX,
+          touch1.clientY - touch2.clientY
+        );
+        
+        if (initialDistance === 0) {
+          initialDistance = distance;
+        } else {
+          const scale = distance / initialDistance;
+          currentScale = Math.max(0.2, Math.min(3, currentScale * scale));
           
-          const touch1 = event.touches[0];
-          const touch2 = event.touches[1];
-          
-          const distance = Math.hypot(
-            touch1.clientX - touch2.clientX,
-            touch1.clientY - touch2.clientY
-          );
-          
-          if (initialDistance === 0) {
-            initialDistance = distance;
-          } else {
-            const scale = distance / initialDistance;
-            currentScale = Math.max(0.2, Math.min(3, currentScale * scale));
-            car.setAttribute('scale', `${currentScale} ${currentScale} ${currentScale}`);
-            initialDistance = distance;
-          }
+          // Scale all visible objects
+          Object.values(targets).forEach(target => {
+            target.objects.forEach(obj => {
+              if (obj) obj.setAttribute('scale', `${currentScale} ${currentScale} ${currentScale}`);
+            });
+          });
+          initialDistance = distance;
         }
-      }, { passive: false });
-    }
+      }
+    }, { passive: false });
 
     document.addEventListener('touchend', function(event) {
       if (event.touches.length < 2) {
@@ -237,7 +231,7 @@
         const deltaX = event.touches[0].clientX - startX;
         const deltaY = event.touches[0].clientY - startY;
         
-        // Swipe to rotate - with smoothing
+        // Swipe to rotate all objects
         let newRotationY = currentRotationY + deltaX * 0.5;
         let newRotationX = currentRotationX + deltaY * 0.3;
         
@@ -248,7 +242,12 @@
         currentRotationY = lastRotation.y;
         currentRotationX = lastRotation.x;
         
-        car.setAttribute('rotation', `${currentRotationX} ${currentRotationY} 0`);
+        // Rotate all visible objects
+        Object.values(targets).forEach(target => {
+          target.objects.forEach(obj => {
+            if (obj) obj.setAttribute('rotation', `${currentRotationX} ${currentRotationY} 0`);
+          });
+        });
         
         startX = event.touches[0].clientX;
         startY = event.touches[0].clientY;
@@ -256,61 +255,50 @@
     }, { passive: true });
 
     // Log elements
-    console.log('✓ Elements ready:', { car, testBox, target, scene });
+    console.log('✓ All targets ready:', targets);
     
-    // Listen for model load event
-    if (car) {
-      car.addEventListener('model-loaded', () => {
-        modelLoaded = true;
-        console.log('✓ Car model loaded successfully!');
-        testBox.setAttribute('visible', 'false');
-      });
-
-      car.addEventListener('error', (e) => {
-        console.error('Model load error:', e);
-        console.warn('Keeping test box visible instead');
-      });
-    }
-
-    // Status updates
-    scene.addEventListener('targetFound', () => {
-      console.log('Target Found!');
-      if (modelLoaded) {
-        statusDiv.textContent = '✓ Target detected! Model visible';
-      } else {
-        statusDiv.textContent = '✓ Target detected (loading model...)';
-      }
+    // Status updates for multiple targets
+    const targetLabels = { 0: 'Apple', 1: 'Butterfly' };
+    
+    scene.addEventListener('targetFound', (event) => {
+      const targetIndex = event.detail.targetIndex;
+      const label = targetLabels[targetIndex] || '?';
+      console.log(`Target ${label} (${targetIndex}) Found!`);
+      statusDiv.textContent = `✓ Target ${label} detected!`;
       statusDiv.style.background = 'rgba(0, 200, 0, 0.7)';
     });
 
-    scene.addEventListener('targetLost', () => {
-      console.log('Target Lost');
+    scene.addEventListener('targetLost', (event) => {
+      const targetIndex = event.detail.targetIndex;
+      const label = targetLabels[targetIndex] || '?';
+      console.log(`Target ${label} (${targetIndex}) Lost`);
       statusDiv.textContent = 'Detecting target...';
       statusDiv.style.background = 'rgba(0, 0, 0, 0.7)';
     });
 
-    // Stability improvements - reduce tracking jitter
-    let lastTargetTransform = null;
-    const updateThreshold = 0.01;
+    // Stability improvements - reduce tracking jitter for all targets
+    const targetTransforms = {};
 
     function isSignificantChange(current, last) {
       if (!last) return true;
       const dx = Math.abs(current[0] - last[0]);
       const dy = Math.abs(current[1] - last[1]);
       const dz = Math.abs(current[2] - last[2]);
-      return (dx + dy + dz) > updateThreshold;
+      return (dx + dy + dz) > 0.01;
     }
 
     // Update target stabilization every frame
     let updateInterval = setInterval(() => {
-      if (target && target.object3D) {
-        const position = target.object3D.position;
-        const posArray = [position.x, position.y, position.z];
-        
-        if (isSignificantChange(posArray, lastTargetTransform)) {
-          lastTargetTransform = posArray;
+      Object.entries(targets).forEach(([key, target]) => {
+        if (target.element && target.element.object3D) {
+          const position = target.element.object3D.position;
+          const posArray = [position.x, position.y, position.z];
+          
+          if (isSignificantChange(posArray, targetTransforms[key])) {
+            targetTransforms[key] = posArray;
+          }
         }
-      }
+      });
     }, 16); // ~60fps
 
     // Error handling
